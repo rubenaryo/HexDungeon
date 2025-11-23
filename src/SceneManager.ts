@@ -1,28 +1,18 @@
-import { vec2, vec3, mat4 } from 'gl-matrix';
+import { vec2, vec3, vec4, mat4 } from 'gl-matrix';
 import Hex from './geometry/Hex';
+import HexGrid from './HexGrid';
 import ShaderProgram from './rendering/gl/ShaderProgram';
 import Camera from './Camera';
 
 export class SceneManager {
     hex: Hex;
-    tiles: vec2[];
-    tilesRadius: number;
+    hexGrid: HexGrid;
 
     loadScene(): void {
         this.hex = new Hex();
         this.hex.create();
-
-        this.tilesRadius = 5;
-
-        this.tiles = [];
-        for (let q = -this.tilesRadius; q <= this.tilesRadius; ++q) {
-            for (let r = -this.tilesRadius; r <= this.tilesRadius; ++r) {
-                for (let s = -this.tilesRadius; s <= this.tilesRadius; ++s) {
-                    if ((q + r + s) == 0)
-                        this.tiles.push(vec2.fromValues(q, r));
-                }
-            }
-        }
+        this.hexGrid = new HexGrid();
+        this.hexGrid.initializeHexGrid(5, null);
     }
 
     drawTiles(prog: ShaderProgram, camera: Camera): void {
@@ -37,16 +27,20 @@ export class SceneManager {
         prog.setUniformMat4("u_ViewProj", viewProj);
         prog.setUniformVec4("u_Color", color);
 
-        this.tiles.forEach((tile) => {
+        let hexTiles = this.hexGrid.getFlatCoordArray();
+        hexTiles.forEach((tile) => {
             const q = tile[0];
             const r = tile[1];
 
-            var x = (3. / 2 * q);
-            var y = (Math.sqrt(3) / 2 * q + Math.sqrt(3) * r);
+            const hexData = this.hexGrid.getHexData(q, r);
+            
+            let color = vec3.fromValues(1, 1, 1); // Default white
+            prog.setUniformVec4("u_Color", vec4.fromValues(color[0], color[1], color[2], 1));
 
-            let v = vec3.fromValues(x * 1.1, 0, y * 1.1);
-
-            mat4.fromTranslation(model, v);
+            // get cartesian pos
+            const position = this.hexGrid.getHexWorldPosition(q, r);
+            
+            mat4.fromTranslation(model, position);
             prog.setUniformMat4("u_Model", model);
             mat4.transpose(modelinvtr, model);
             mat4.invert(modelinvtr, modelinvtr);
