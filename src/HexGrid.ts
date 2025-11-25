@@ -1,4 +1,5 @@
 import HexData from './HexData'
+import * as hd from './HexData'
 import { vec2, vec3, mat4 } from 'gl-matrix';
 
 class HexGrid {
@@ -44,15 +45,33 @@ class HexGrid {
                     if ((q + r + s) === 0) {
                         const coord = vec2.fromValues(q, r);
                         this.flatCoordArray.push(coord);
-                        const hexData = new HexData(q, r);
-                        
-                        // TODO: WFC Stuff
+                        let hexData = new HexData(q, r);
 
                         this.setHexData(q, r, hexData);
                     }
                 }
             }
         }
+    }
+
+    collapseSingleTile(): boolean
+    {
+        const allHexes = this.getAllHexData();
+        const unobservedHexes = allHexes.filter(hex => !hex.observed);
+        
+        if (unobservedHexes.length === 0) return false;
+
+        // Per WFC - begin by observing the tile with the lowest entropy (least choice)
+        const minEntropy = Math.min(...unobservedHexes.map(hex => hex.entropy));
+        const candidates = unobservedHexes.filter(hex => hex.entropy === minEntropy);
+        
+        const randomHex = candidates[Math.floor(Math.random() * candidates.length)];
+        const possibleTypes = Array.from(randomHex.possibleTypes);
+        const randomTile = possibleTypes[Math.floor(Math.random() * possibleTypes.length)];
+        
+        randomHex.collapseTo(randomTile);
+
+        return true;
     }
 
     // Helper method to convert to cartesian

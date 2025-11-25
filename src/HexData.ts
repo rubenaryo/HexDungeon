@@ -5,9 +5,11 @@ import { vec3 } from "gl-matrix";
 export enum TileType
 {
     INVALID = -1,
-    WATER = 0,
-    SAND = 1,
-    GRASS = 2
+    FIRST,
+    WATER = FIRST,
+    SAND,
+    GRASS,
+    COUNT // Keep last
 };
 
 export function getPossibleNeighborTypes(t: TileType): TileType[]
@@ -53,12 +55,30 @@ class HexData {
     q: number;
     r: number;
     type: TileType;
+    observed: boolean;
+    possibleTypes: Set<TileType>
+    entropy: number;
 
     constructor(q: number, r: number) {
         this.q = q;
         this.r = r;
         this.type = TileType.INVALID;
+        this.observed = false;
+
+        this.possibleTypes = new Set<TileType>();
+        for (let i = TileType.FIRST; i < TileType.COUNT; ++i)
+            this.possibleTypes.add(i);
+
+        this.entropy = this.possibleTypes.size;
+    }
+
+    collapseTo(type: TileType)
+    {
+        this.type = type;
+        this.possibleTypes.clear();
+        this.entropy = 0;
+        this.observed = true;
     }
 }
 
-export default HexData;
+export default HexData

@@ -14,19 +14,18 @@ export class SceneManager {
         this.hex.create();
         this.hexGrid = new HexGrid();
         this.hexGrid.initializeHexGrid(5, null);
+        this.hexGrid.collapseSingleTile();
     }
 
     drawTiles(prog: ShaderProgram, camera: Camera): void {
         let model = mat4.create();
         let modelinvtr = mat4.create();
         let viewProj = mat4.create();
-        let color = vec3.fromValues(1, 1, 1);
 
         // Model matrix and inv model
         mat4.identity(model);
         mat4.multiply(viewProj, camera.projectionMatrix, camera.viewMatrix);
         prog.setUniformMat4("u_ViewProj", viewProj);
-        prog.setUniformVec4("u_Color", color);
 
         let hexTiles = this.hexGrid.getFlatCoordArray();
         hexTiles.forEach((tile) => {
