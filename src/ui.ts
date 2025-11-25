@@ -13,10 +13,10 @@ export interface UIState
 /**
  * Creates UI controls and attaches event bindings.
  * 
- * @param loadSceneCallback A function called whenever the user requests a scene reload.
+ * @param singleTileCallback A function called whenever the user requests a scene reload.
  * @returns UIState An object containing live-updating UI values.
  */
-export function createUI(loadSceneCallback: () => void): UIState
+export function createUI(singleTileCallback: () => void, wholeGridCallback: () => void): UIState
 {
     const uiState: UIState =
     {
@@ -28,9 +28,14 @@ export function createUI(loadSceneCallback: () => void): UIState
     const gui = new DAT.GUI();
 
     gui.add(
-        { Load_Scene: () => loadSceneCallback() },
-        'Load_Scene'
-    ).name('Load Scene');
+        { CollapseSingleTile: () => singleTileCallback() },
+        'CollapseSingleTile'
+    ).name('CollapseSingleTile');
+
+    gui.add(
+        { CollapseWholeGrid: () => wholeGridCallback() },
+        'CollapseWholeGrid'
+    ).name('CollapseWholeGrid');
 
     gui.add(uiState, 'colorR', 0, 1).step(0.1).name('Red');
     gui.add(uiState, 'colorG', 0, 1).step(0.1).name('Green');

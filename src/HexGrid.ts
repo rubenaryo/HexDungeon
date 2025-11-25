@@ -59,7 +59,7 @@ class HexGrid {
         const allHexes = this.getAllHexData();
         const unobservedHexes = allHexes.filter(hex => !hex.observed);
         
-        if (unobservedHexes.length === 0) return false;
+        if (unobservedHexes.length === 0) return true;
 
         // Per WFC - begin by observing the tile with the lowest entropy (least choice)
         const minEntropy = Math.min(...unobservedHexes.map(hex => hex.entropy));
@@ -72,7 +72,7 @@ class HexGrid {
         randomHex.collapseTo(randomTile);
         this.propogateConstraints(randomHex);
 
-        return true;
+        return false;
     }
 
     propogateConstraints(observedTile: HexData)

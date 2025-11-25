@@ -16,6 +16,20 @@ export class SceneManager {
         this.hexGrid.initializeHexGrid(5, null);
     }
 
+    collapseSingleTile(): void
+    {
+        this.hexGrid.collapseSingleTile();
+    }
+
+    collapseWholeGrid(): void
+    {
+        var done = false;
+        while(!done)
+        {
+            done = this.hexGrid.collapseSingleTile();
+        }
+    }
+
     drawTiles(prog: ShaderProgram, camera: Camera): void {
         let model = mat4.create();
         let modelinvtr = mat4.create();

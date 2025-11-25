@@ -31,10 +31,10 @@ function main(): void
     const scene = new SceneManager();
 
     // UIManager owns all UI state & triggers scene reload
-    const ui = createUI(() =>
-    {
-        scene.loadScene();
-    });
+    const ui = createUI(
+        () => {scene.collapseSingleTile(); },
+        () => {scene.collapseWholeGrid(); }
+    );
 
     // Initial load
     scene.loadScene();
