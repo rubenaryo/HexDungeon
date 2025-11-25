@@ -34,6 +34,26 @@ export function getPossibleNeighborTypes(t: TileType): TileType[]
     return ret;
 }
 
+export function getDisallowedNeighborTypes(t: TileType): TileType[]
+{
+    let ret = [];
+    switch(t)
+    {
+        case TileType.INVALID:
+            break;
+        case TileType.WATER:
+            ret.push(TileType.GRASS);
+            break;
+        case TileType.SAND:
+            break;
+        case TileType.GRASS:
+            ret.push(TileType.WATER);
+            break;
+    }
+
+    return ret;
+}
+
 export function getColorFromTileType(t: TileType) : vec3
 {
     switch(t)

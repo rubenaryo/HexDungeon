@@ -14,7 +14,6 @@ export class SceneManager {
         this.hex.create();
         this.hexGrid = new HexGrid();
         this.hexGrid.initializeHexGrid(5, null);
-        this.hexGrid.collapseSingleTile();
     }
 
     drawTiles(prog: ShaderProgram, camera: Camera): void {

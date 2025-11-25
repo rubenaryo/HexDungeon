@@ -70,8 +70,26 @@ class HexGrid {
         const randomTile = possibleTypes[Math.floor(Math.random() * possibleTypes.length)];
         
         randomHex.collapseTo(randomTile);
+        this.propogateConstraints(randomHex);
 
         return true;
+    }
+
+    propogateConstraints(observedTile: HexData)
+    {
+        let q = observedTile.q;
+        let r = observedTile.r;
+        let disallowedTypes = hd.getDisallowedNeighborTypes(observedTile.type);
+        
+        let neighbors = this.getNeighbors(q,r);
+        neighbors.forEach(neighbor => {
+            if (!neighbor.observed) {
+                disallowedTypes.forEach(type => {
+                    neighbor.possibleTypes.delete(type);
+                })
+                neighbor.entropy = neighbor.possibleTypes.size;
+            }
+        });
     }
 
     // Helper method to convert to cartesian
