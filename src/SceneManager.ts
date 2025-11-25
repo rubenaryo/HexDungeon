@@ -1,6 +1,7 @@
 import { vec2, vec3, vec4, mat4 } from 'gl-matrix';
 import Hex from './geometry/Hex';
 import HexGrid from './HexGrid';
+import * as hd from './HexData'
 import ShaderProgram from './rendering/gl/ShaderProgram';
 import Camera from './Camera';
 
@@ -33,13 +34,13 @@ export class SceneManager {
             const r = tile[1];
 
             const hexData = this.hexGrid.getHexData(q, r);
-            
-            let color = vec3.fromValues(1, 1, 1); // Default white
+
+            let color = hd.getColorFromTileType(hexData.type);
             prog.setUniformVec4("u_Color", vec4.fromValues(color[0], color[1], color[2], 1));
 
             // get cartesian pos
             const position = this.hexGrid.getHexWorldPosition(q, r);
-            
+
             mat4.fromTranslation(model, position);
             prog.setUniformMat4("u_Model", model);
             mat4.transpose(modelinvtr, model);
