@@ -44,8 +44,10 @@ export function getDisallowedNeighborTypes(t: TileType): TileType[]
             break;
         case TileType.WATER:
             ret.push(TileType.GRASS);
+            ret.push(TileType.FOREST);
             break;
         case TileType.SAND:
+            ret.push(TileType.FOREST);
             break;
         case TileType.GRASS:
             ret.push(TileType.WATER);
