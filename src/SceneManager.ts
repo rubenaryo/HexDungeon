@@ -13,7 +13,12 @@ export class SceneManager {
         this.hex = new Hex();
         this.hex.create();
         this.hexGrid = new HexGrid();
-        this.hexGrid.initializeHexGrid(5, null);
+        this.hexGrid.initializeHexGrid(15, null);
+
+        const SPACING:number = 5;
+        this.hexGrid.forceCollapseSingleTile(-SPACING, 0, hd.TileType.WATER);
+        this.hexGrid.forceCollapseSingleTile(SPACING, 0, hd.TileType.WATER);
+        this.hexGrid.forceCollapseSingleTile(SPACING/2.5, -SPACING/2.5, hd.TileType.WATER);
     }
 
     collapseSingleTile(): void

@@ -54,6 +54,19 @@ class HexGrid {
         }
     }
 
+    forceCollapseSingleTile(q:number, r:number, type:hd.TileType): boolean
+    {
+        let hex = this.getHexData(q,r);
+
+        if (hex.observed === true)
+            return false;
+
+        hex.collapseTo(type);
+        this.propogateConstraints(hex);
+
+        return true;
+    }
+
     collapseSingleTile(): boolean
     {
         const allHexes = this.getAllHexData();
