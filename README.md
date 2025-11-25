@@ -6,10 +6,16 @@ HexDungeon is a WebGL-based dungeon layout builder using Wave-Function Collapse 
 #### Goal
 The goal is to build a foundational map builder to serve as the basis for a future game project in WebGL. The idea is to build the supporting systems for a hex tile, turn-based dungeon crawler with procedurally generated levels.
 
+[Live Demo](https://rubenaryo.github.io/HexDungeon/)
+
+## Milestone 2
+For milestone 2, I was able to craft the core wave-function collapse algorithm, as well as improve the camera movement and create some UI buttons. The core algorithm still needs tweaking since each tile type has an equal chance of collapsing into, leading to some strange terrain generation or a bias towards certain tiles. 
+
+![](img/example_wfc.png)
+
 ## Milestone 1
 For milestone 1, I focused on getting a polished hex grid implemented in WebGL with Axial coordinates. I didn't quite get a finished Wave-function collapse implementation finalized, so I will be pushing that back to be the first priority of milestone 2. 
 
-[Live Demo](https://rubenaryo.github.io/HexDungeon/)
 
 ## Design Doc
 #### Inspiration/reference:
