@@ -83,49 +83,37 @@ class HexGrid {
         return false;
     }
 
-    /**
-     * NEW propagation logic (socket-based)
-     */
     propagateConstraints(observed: HexData) {
+        if (!observed.tile) return; // sanity check
+
         const queue: HexData[] = [observed];
 
         while (queue.length > 0) {
             const current = queue.shift()!;
-            const { q, r } = current;
+            if (!current.tile) continue;
 
-            const neighbors = this.getNeighborData(q, r);
+            const neighbors = this.getNeighborData(current.q, current.r);
 
             for (let dir = 0; dir < 6; dir++) {
                 const neighbor = neighbors[dir];
                 if (!neighbor || neighbor.observed) continue;
 
                 const oppositeDir = (dir + 3) % 6 as Direction;
-
-                // Filter invalid tiles in neighbor
                 let changed = false;
 
-                for (const tile of Array.from(neighbor.possibleTiles)) {
-                    // Check compatibility with ALL possible tiles of current
-                    let validAgainstAny = false;
+                for (const neighborTile of Array.from(neighbor.possibleTiles)) {
+                    const mySocket = current.tile.sockets[dir as Direction];
+                    const neighborSocket = neighborTile.sockets[oppositeDir];
 
-                    for (const myTile of current.possibleTiles) {
-                        const mySocket = myTile.sockets[dir as Direction];
-                        const neighborSocket = tile.sockets[oppositeDir];
-
-                        if (socketsMatch(mySocket, neighborSocket)) {
-                            validAgainstAny = true;
-                            break;
-                        }
-                    }
-
-                    if (!validAgainstAny) {
-                        neighbor.possibleTiles.delete(tile);
+                    if (!socketsMatch(mySocket, neighborSocket)) {
+                        neighbor.possibleTiles.delete(neighborTile);
                         changed = true;
                     }
                 }
 
                 if (changed) {
                     neighbor.entropy = neighbor.possibleTiles.size;
+                    // Only add neighbor once to the queue
                     queue.push(neighbor);
                 }
             }
