@@ -1,6 +1,7 @@
 // Main data structure for hexes behavior
 
 import { vec3 } from "gl-matrix";
+import { TileDefinition, ALL_TILES } from './TileDefinition';
 
 export enum TileType
 {
@@ -83,31 +84,31 @@ export function getColorFromTileType(t: TileType) : vec3
 class HexData {
     q: number;
     r: number;
-    type: TileType;
     observed: boolean;
-    possibleTypes: Set<TileType>
+    possibleTiles: Set<TileDefinition>;
     entropy: number;
+    tile: TileDefinition | null;
 
     constructor(q: number, r: number) {
         this.q = q;
         this.r = r;
-        this.type = TileType.INVALID;
+
         this.observed = false;
+        this.tile = null;
 
-        this.possibleTypes = new Set<TileType>();
-        for (let i = TileType.FIRST; i < TileType.COUNT; ++i)
-            this.possibleTypes.add(i);
+        // Initially all tiles are possible
+        this.possibleTiles = new Set<TileDefinition>();
+        ALL_TILES.forEach(t => this.possibleTiles.add(t));
 
-        this.entropy = this.possibleTypes.size;
+        this.entropy = this.possibleTiles.size;
     }
 
-    collapseTo(type: TileType)
-    {
-        this.type = type;
-        this.possibleTypes.clear();
-        this.entropy = 0;
+    collapseTo(tile: TileDefinition) {
+        this.tile = tile;
+        this.possibleTiles.clear();
         this.observed = true;
+        this.entropy = 0;
     }
 }
 
-export default HexData
+export default HexData;

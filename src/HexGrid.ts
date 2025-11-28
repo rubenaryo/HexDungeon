@@ -1,6 +1,6 @@
 import HexData from './HexData'
-import * as hd from './HexData'
-import { vec2, vec3, mat4 } from 'gl-matrix';
+import { TileDefinition, ALL_TILES, socketsMatch, Direction } from './TileDefinition';
+import { vec2, vec3 } from 'gl-matrix';
 
 class HexGrid {
     private hexData: Map<string, HexData>;
@@ -35,101 +35,129 @@ class HexGrid {
         return this.flatCoordArray;
     }
 
-    initializeHexGrid(tilesRadius: number, possibleTileTypes: string[]): void {
+    initializeHexGrid(tilesRadius: number): void {
         this.flatCoordArray = [];
         this.hexData.clear();
 
         for (let q = -tilesRadius; q <= tilesRadius; ++q) {
             for (let r = -tilesRadius; r <= tilesRadius; ++r) {
-                for (let s = -tilesRadius; s <= tilesRadius; ++s) {
-                    if ((q + r + s) === 0) {
-                        const coord = vec2.fromValues(q, r);
-                        this.flatCoordArray.push(coord);
-                        let hexData = new HexData(q, r);
+                const s = -q - r;
+                if (Math.abs(s) <= tilesRadius) {
+                    const coord = vec2.fromValues(q, r);
+                    this.flatCoordArray.push(coord);
 
-                        this.setHexData(q, r, hexData);
-                    }
+                    const hexData = new HexData(q, r);
+                    this.setHexData(q, r, hexData);
                 }
             }
         }
     }
 
-    forceCollapseSingleTile(q:number, r:number, type:hd.TileType): boolean
-    {
-        let hex = this.getHexData(q,r);
+    /** Force a specific tile definition at this location */
+    forceCollapseSingleTile(q: number, r: number, tile: TileDefinition): boolean {
+        const hex = this.getHexData(q, r);
+        if (!hex || hex.observed) return false;
 
-        if (hex.observed === true)
-            return false;
-
-        hex.collapseTo(type);
-        this.propogateConstraints(hex);
-
+        hex.collapseTo(tile);
+        this.propagateConstraints(hex);
         return true;
     }
 
-    collapseSingleTile(): boolean
-    {
+    /** Choose a tile with lowest entropy and collapse it */
+    collapseSingleTile(): boolean {
         const allHexes = this.getAllHexData();
-        const unobservedHexes = allHexes.filter(hex => !hex.observed);
-        
-        if (unobservedHexes.length === 0) return true;
+        const unobserved = allHexes.filter(h => !h.observed);
 
-        // Per WFC - begin by observing the tile with the lowest entropy (least choice)
-        const minEntropy = Math.min(...unobservedHexes.map(hex => hex.entropy));
-        const candidates = unobservedHexes.filter(hex => hex.entropy === minEntropy);
-        
-        const randomHex = candidates[Math.floor(Math.random() * candidates.length)];
-        const possibleTypes = Array.from(randomHex.possibleTypes);
-        const randomTile = possibleTypes[Math.floor(Math.random() * possibleTypes.length)];
-        
-        randomHex.collapseTo(randomTile);
-        this.propogateConstraints(randomHex);
+        if (unobserved.length === 0) return true;
+
+        const minEntropy = Math.min(...unobserved.map(h => h.entropy));
+        const candidates = unobserved.filter(h => h.entropy === minEntropy);
+        const chosen = candidates[Math.floor(Math.random() * candidates.length)];
+
+        const possible = Array.from(chosen.possibleTiles);
+        const chosenTile = possible[Math.floor(Math.random() * possible.length)];
+
+        chosen.collapseTo(chosenTile);
+        this.propagateConstraints(chosen);
 
         return false;
     }
 
-    propogateConstraints(observedTile: HexData)
-    {
-        let q = observedTile.q;
-        let r = observedTile.r;
-        let disallowedTypes = hd.getDisallowedNeighborTypes(observedTile.type);
-        
-        let neighbors = this.getNeighbors(q,r);
-        neighbors.forEach(neighbor => {
-            if (!neighbor.observed) {
-                disallowedTypes.forEach(type => {
-                    neighbor.possibleTypes.delete(type);
-                })
-                neighbor.entropy = neighbor.possibleTypes.size;
+    /**
+     * NEW propagation logic (socket-based)
+     */
+    propagateConstraints(observed: HexData) {
+        const queue: HexData[] = [observed];
+
+        while (queue.length > 0) {
+            const current = queue.shift()!;
+            const { q, r } = current;
+
+            const neighbors = this.getNeighborData(q, r);
+
+            for (let dir = 0; dir < 6; dir++) {
+                const neighbor = neighbors[dir];
+                if (!neighbor || neighbor.observed) continue;
+
+                const oppositeDir = (dir + 3) % 6 as Direction;
+
+                // Filter invalid tiles in neighbor
+                let changed = false;
+
+                for (const tile of Array.from(neighbor.possibleTiles)) {
+                    // Check compatibility with ALL possible tiles of current
+                    let validAgainstAny = false;
+
+                    for (const myTile of current.possibleTiles) {
+                        const mySocket = myTile.sockets[dir as Direction];
+                        const neighborSocket = tile.sockets[oppositeDir];
+
+                        if (socketsMatch(mySocket, neighborSocket)) {
+                            validAgainstAny = true;
+                            break;
+                        }
+                    }
+
+                    if (!validAgainstAny) {
+                        neighbor.possibleTiles.delete(tile);
+                        changed = true;
+                    }
+                }
+
+                if (changed) {
+                    neighbor.entropy = neighbor.possibleTiles.size;
+                    queue.push(neighbor);
+                }
             }
-        });
+        }
     }
 
-    // Helper method to convert to cartesian
+    /** World coordinate for rendering */
     getHexWorldPosition(q: number, r: number): vec3 {
         const x = (3.0 / 2 * q);
         const y = (Math.sqrt(3) / 2 * q + Math.sqrt(3) * r);
         return vec3.fromValues(x * 1.1, 0, y * 1.1);
     }
 
-    getNeighbors(q: number, r: number): HexData[] {
-        // Hexagonal neighbors in axial coordinates
-        const directions = [
-            [1, 0], [1, -1], [0, -1],
-            [-1, 0], [-1, 1], [0, 1]
+    /** Returns neighbors indexed by Direction (0–5) */
+    getNeighborData(q: number, r: number): Array<HexData | null> {
+        const dirs = [
+            [0, -1],   // NORTH
+            [1, -1],   // NE
+            [1, 0],    // SE
+            [0, 1],    // SOUTH
+            [-1, 1],   // SW
+            [-1, 0]    // NW
         ];
-        
-        const neighbors: HexData[] = [];
-        directions.forEach(([dq, dr]) => {
-            const neighborQ = q + dq;
-            const neighborR = r + dr;
-            const neighbor = this.getHexData(neighborQ, neighborR);
-            if (neighbor) {
-                neighbors.push(neighbor);
-            }
-        });
-        
-        return neighbors;
+
+        const out: Array<HexData | null> = [];
+
+        for (let i = 0; i < 6; i++) {
+            const [dq, dr] = dirs[i];
+            out[i] = this.getHexData(q + dq, r + dr);
+        }
+
+        return out;
     }
 }
 

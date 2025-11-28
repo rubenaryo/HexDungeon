@@ -13,12 +13,12 @@ export class SceneManager {
         this.hex = new Hex();
         this.hex.create();
         this.hexGrid = new HexGrid();
-        this.hexGrid.initializeHexGrid(15, null);
+        this.hexGrid.initializeHexGrid(15);
 
-        const SPACING:number = 5;
-        this.hexGrid.forceCollapseSingleTile(-SPACING, 0, hd.TileType.WATER);
-        this.hexGrid.forceCollapseSingleTile(SPACING, 0, hd.TileType.WATER);
-        this.hexGrid.forceCollapseSingleTile(SPACING/2.5, -SPACING/2.5, hd.TileType.WATER);
+        //const SPACING:number = 5;
+        //this.hexGrid.forceCollapseSingleTile(-SPACING, 0, hd.TileType.WATER);
+        //this.hexGrid.forceCollapseSingleTile(SPACING, 0, hd.TileType.WATER);
+        //this.hexGrid.forceCollapseSingleTile(SPACING/2.5, -SPACING/2.5, hd.TileType.WATER);
     }
 
     collapseSingleTile(): void
@@ -52,7 +52,7 @@ export class SceneManager {
 
             const hexData = this.hexGrid.getHexData(q, r);
 
-            let color = hd.getColorFromTileType(hexData.type);
+            let color = vec3.fromValues(0.0, 0.0, 0.0);//hd.getColorFromTileType(hexData.type);
             prog.setUniformVec4("u_Color", vec4.fromValues(color[0], color[1], color[2], 1));
 
             // get cartesian pos
