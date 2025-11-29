@@ -18,7 +18,6 @@ uniform sampler2D u_Texture;
 // their specific values without knowing the vertices that contributed to them
 in vec4 fs_Nor;
 in vec4 fs_LightVec;
-in vec4 fs_Col;
 in vec2 fs_UV;
 
 out vec4 out_Col; // This is the final output color that you will see on your
@@ -29,6 +28,7 @@ void main()
     // Material base color (before shading)
         vec4 texColor = texture(u_Texture, fs_UV);
         vec4 diffuseColor = u_Color * texColor;
+        diffuseColor = texColor;
         
 
         // Calculate the diffuse term for Lambert shading
@@ -43,5 +43,5 @@ void main()
                                                             //lit by our point light are not completely black.
 
         // Compute final shaded color
-        out_Col = vec4(diffuseColor.rgb * lightIntensity, diffuseColor.a);
+        out_Col = vec4(diffuseColor.rgb * lightIntensity, 1.0);
 }

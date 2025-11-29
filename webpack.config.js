@@ -38,7 +38,8 @@ module.exports = {
   plugins: [
     new CopyWebpackPlugin({
       patterns: [
-        { from: "models/**/*.obj", to: "models/[name][ext]" }
+        { from: "models/**/*.obj", to: "models/[name][ext]" },
+        { from: "models/**/*.png", to: "models/[name][ext]" }
       ]
     })
   ]

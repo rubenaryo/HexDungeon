@@ -1,4 +1,4 @@
-import { vec2, vec3, vec4, mat2, mat3, mat4 } from 'gl-matrix';
+import { vec2, vec3, vec4, mat3, mat4 } from 'gl-matrix';
 import Drawable from './Drawable';
 import { gl } from '../../globals';
 
@@ -16,7 +16,7 @@ export class Shader {
       throw gl.getShaderInfoLog(this.shader);
     }
   }
-};
+}
 
 class ShaderProgram {
   prog: WebGLProgram;
@@ -24,6 +24,7 @@ class ShaderProgram {
   attrPos: number;
   attrNor: number;
   attrCol: number;
+  attrUV: number;
 
   private uniformLocations: Map<string, WebGLUniformLocation> = new Map();
 
@@ -41,6 +42,7 @@ class ShaderProgram {
     this.attrPos = gl.getAttribLocation(this.prog, "vs_Pos");
     this.attrNor = gl.getAttribLocation(this.prog, "vs_Nor");
     this.attrCol = gl.getAttribLocation(this.prog, "vs_Col");
+    this.attrUV = gl.getAttribLocation(this.prog, "vs_UV");
   }
 
   use() {
@@ -60,44 +62,13 @@ class ShaderProgram {
     return loc;
   }
 
-  // Floats
-  setUniformFloat(name: string, v: number) {
-    this.use();
-    gl.uniform1f(this.getUniformLocation(name), v);
-  }
-
-  // Integers
-  setUniformInt(name: string, v: number) {
-    this.use();
-    gl.uniform1i(this.getUniformLocation(name), v);
-  }
-
-  // Vectors
-  setUniformVec2(name: string, v: vec2) {
-    this.use();
-    gl.uniform2fv(this.getUniformLocation(name), v);
-  }
-
-  setUniformVec3(name: string, v: vec3) {
-    this.use();
-    gl.uniform3fv(this.getUniformLocation(name), v);
-  }
-
-  setUniformVec4(name: string, v: vec4) {
-    this.use();
-    gl.uniform4fv(this.getUniformLocation(name), v);
-  }
-
-  // Matrices
-  setUniformMat3(name: string, m: mat3) {
-    this.use();
-    gl.uniformMatrix3fv(this.getUniformLocation(name), false, m);
-  }
-
-  setUniformMat4(name: string, m: mat4) {
-    this.use();
-    gl.uniformMatrix4fv(this.getUniformLocation(name), false, m);
-  }
+  setUniformFloat(name: string, v: number) { this.use(); gl.uniform1f(this.getUniformLocation(name), v); }
+  setUniformInt(name: string, v: number) { this.use(); gl.uniform1i(this.getUniformLocation(name), v); }
+  setUniformVec2(name: string, v: vec2) { this.use(); gl.uniform2fv(this.getUniformLocation(name), v); }
+  setUniformVec3(name: string, v: vec3) { this.use(); gl.uniform3fv(this.getUniformLocation(name), v); }
+  setUniformVec4(name: string, v: vec4) { this.use(); gl.uniform4fv(this.getUniformLocation(name), v); }
+  setUniformMat3(name: string, m: mat3) { this.use(); gl.uniformMatrix3fv(this.getUniformLocation(name), false, m); }
+  setUniformMat4(name: string, m: mat4) { this.use(); gl.uniformMatrix4fv(this.getUniformLocation(name), false, m); }
 
   draw(d: Drawable) {
     this.use();
@@ -112,12 +83,18 @@ class ShaderProgram {
       gl.vertexAttribPointer(this.attrNor, 4, gl.FLOAT, false, 0, 0);
     }
 
+    if (this.attrUV != -1 && d.bindUV()) {
+      gl.enableVertexAttribArray(this.attrUV);
+      gl.vertexAttribPointer(this.attrUV, 2, gl.FLOAT, false, 0, 0);
+    }
+
     d.bindIdx();
     gl.drawElements(d.drawMode(), d.elemCount(), gl.UNSIGNED_INT, 0);
 
     if (this.attrPos != -1) gl.disableVertexAttribArray(this.attrPos);
     if (this.attrNor != -1) gl.disableVertexAttribArray(this.attrNor);
+    if (this.attrUV != -1) gl.disableVertexAttribArray(this.attrUV);
   }
-};
+}
 
 export default ShaderProgram;
