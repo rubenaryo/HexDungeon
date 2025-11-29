@@ -39,6 +39,7 @@ class Hex extends Drawable
             this.generateIdx();
             this.generatePos();
             this.generateNor();
+            this.generateUV();
 
             this.count = this.indices.length;
 
@@ -50,6 +51,9 @@ class Hex extends Drawable
 
             gl.bindBuffer(gl.ARRAY_BUFFER, this.bufPos);
             gl.bufferData(gl.ARRAY_BUFFER, this.positions, gl.STATIC_DRAW);
+
+            gl.bindBuffer(gl.ARRAY_BUFFER, this.bufUV);
+            gl.bufferData(gl.ARRAY_BUFFER, this.uvs, gl.STATIC_DRAW);
 
             console.log(`Created hex from OBJ file`);
         }

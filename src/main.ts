@@ -53,6 +53,11 @@ function main(): void
         new Shader(gl.FRAGMENT_SHADER, require('./shaders/lambert-frag.glsl')),
     ]);
 
+    const simple = new ShaderProgram([
+        new Shader(gl.VERTEX_SHADER, require('./shaders/simple-vert.glsl')),
+        new Shader(gl.FRAGMENT_SHADER, require('./shaders/simple-frag.glsl')),
+    ]);
+
     function tick(): void
     {
         stats.begin();
@@ -68,7 +73,7 @@ function main(): void
             vec4.fromValues(ui.colorR, ui.colorG, ui.colorB, 1.0)
         );
 
-        scene.drawTiles(lambert, camera);
+        scene.drawTiles(lambert, simple, camera);
         renderer.renderGrid(camera);
 
         stats.end();

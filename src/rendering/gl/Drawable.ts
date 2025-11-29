@@ -6,17 +6,20 @@ abstract class Drawable {
   bufIdx: WebGLBuffer;
   bufPos: WebGLBuffer;
   bufNor: WebGLBuffer;
+  bufUV: WebGLBuffer;
 
   idxBound: boolean = false;
   posBound: boolean = false;
   norBound: boolean = false;
+  uvBound: boolean = false;
 
-  abstract create() : void;
+  abstract create(): void;
 
-  destory() {
+  destroy() {
     gl.deleteBuffer(this.bufIdx);
     gl.deleteBuffer(this.bufPos);
     gl.deleteBuffer(this.bufNor);
+    gl.deleteBuffer(this.bufUV);
   }
 
   generateIdx() {
@@ -32,6 +35,11 @@ abstract class Drawable {
   generateNor() {
     this.norBound = true;
     this.bufNor = gl.createBuffer();
+  }
+
+  generateUV() {
+    this.uvBound = true;
+    this.bufUV = gl.createBuffer();
   }
 
   bindIdx(): boolean {
@@ -55,6 +63,13 @@ abstract class Drawable {
     return this.norBound;
   }
 
+  bindUV(): boolean {        // <-- NEW
+    if (this.uvBound) {
+      gl.bindBuffer(gl.ARRAY_BUFFER, this.bufUV);
+    }
+    return this.uvBound;
+  }
+
   elemCount(): number {
     return this.count;
   }
@@ -62,6 +77,6 @@ abstract class Drawable {
   drawMode(): GLenum {
     return gl.TRIANGLES;
   }
-};
+}
 
 export default Drawable;

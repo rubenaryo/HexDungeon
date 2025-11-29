@@ -41,13 +41,14 @@ export class SceneManager {
         }
     }
 
-    drawTiles(prog: ShaderProgram, camera: Camera): void {
+    drawTiles(prog: ShaderProgram, debugProg: ShaderProgram, camera: Camera): void {
     let model = mat4.create();
     let modelinvtr = mat4.create();
     let viewProj = mat4.create();
 
     mat4.multiply(viewProj, camera.projectionMatrix, camera.viewMatrix);
     prog.setUniformMat4("u_ViewProj", viewProj);
+    debugProg.setUniformMat4("u_ViewProj", viewProj);
 
     const hexTiles = this.hexGrid.getFlatCoordArray();
 
@@ -94,7 +95,7 @@ export class SceneManager {
                 ? vec4.fromValues(0, 1, 0, 1)   // green
                 : vec4.fromValues(1, 0, 0, 1);  // red
 
-            prog.setUniformVec4("u_Color", color);
+            debugProg.setUniformVec4("u_Color", color);
 
             // Offset cube from tile center
             const offset = vec3.clone(dirOffsets[dir]);
@@ -109,16 +110,16 @@ export class SceneManager {
             mat4.fromTranslation(cubeModel, cubePos);
             const CUBE_SCALE = 0.2;
             mat4.scale(cubeModel, cubeModel, vec3.fromValues(CUBE_SCALE, CUBE_SCALE, CUBE_SCALE));
-            prog.setUniformMat4("u_Model", cubeModel);
+            debugProg.setUniformMat4("u_Model", cubeModel);
 
             // Model inverse transpose
             const cubeInvTr = mat4.create();
             mat4.transpose(cubeInvTr, cubeModel);
             mat4.invert(cubeInvTr, cubeInvTr);
-            prog.setUniformMat4("u_ModelInvTr", cubeInvTr);
+            debugProg.setUniformMat4("u_ModelInvTr", cubeInvTr);
 
             // Draw cube mesh
-            prog.draw(this.cube);
+            debugProg.draw(this.cube);
         }
     });
 }
