@@ -90,6 +90,7 @@ export class SceneManager {
         mat4.invert(modelinvtr, modelinvtr);
         prog.setUniformMat4("u_ModelInvTr", modelinvtr);
         
+        prog.setUniformInt("u_Rotation", tileDef ? tileDef.rotation : 0);
         prog.draw(this.hex);   // draw your hex tile mesh
         if (!tileDef) return; // if not collapsed yet
         

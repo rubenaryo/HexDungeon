@@ -87,7 +87,7 @@ const TJunction = makeBaseTile("TJunction", "tjunction.png", {
     [Direction.NORTH]: SocketType.OPEN,
     [Direction.NORTHEAST]: SocketType.OPEN,
     [Direction.SOUTHEAST]: SocketType.WALL,
-    [Direction.SOUTH]: SocketType.WALL,
+    [Direction.SOUTH]: SocketType.OPEN,
     [Direction.SOUTHWEST]: SocketType.WALL,
     [Direction.NORTHWEST]: SocketType.OPEN
 });

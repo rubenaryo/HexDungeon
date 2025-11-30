@@ -19,6 +19,8 @@ uniform mat4 u_ViewProj;    // The matrix that defines the camera's transformati
                             // We've written a static matrix for you to use for HW2,
                             // but in HW3 you'll have to generate one yourself
 
+uniform int u_Rotation;     // The hex rotation by which to modify vs_UV.
+
 in vec4 vs_Pos;             // The array of vertex positions passed to the shader
 
 in vec4 vs_Nor;             // The array of vertex normals passed to the shader
@@ -41,10 +43,20 @@ void main()
                                                             // model matrix. This is necessary to ensure the normals remain
                                                             // perpendicular to the surface after the surface is transformed by
                                                             // the model matrix.
-
-
     fs_Pos = vs_Pos;
-    fs_UV = vs_UV;
+
+    // Hex rotation: given the passed in rotation, rotate the UV's uniformly by 60-degree increments
+    float rotationAngle = float(u_Rotation) * -3.14159 / 3.0;
+
+    mat2 rotationMatrix = mat2(
+        cos(rotationAngle), -sin(rotationAngle),
+        sin(rotationAngle),  cos(rotationAngle)
+    );
+
+    // Rotate UV coordinates
+    vec2 centeredUV = vs_UV - 0.5;
+    fs_UV = rotationMatrix * centeredUV + 0.5;
+
     vec4 modelposition = u_Model * vs_Pos;   // Temporarily store the transformed vertex positions for use below
 
     fs_LightVec = lightPos - modelposition;  // Compute the direction in which the light source lies
