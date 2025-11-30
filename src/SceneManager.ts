@@ -6,6 +6,7 @@ import { SocketType } from './TileDefinition';
 import * as hd from './HexData'
 import ShaderProgram from './rendering/gl/ShaderProgram';
 import Camera from './Camera';
+import {gl} from './globals';
 
 export class SceneManager {
     hex: Hex;
@@ -68,23 +69,30 @@ export class SceneManager {
         const hexData = this.hexGrid.getHexData(q, r);
 
         if (!hexData) return;
-
+        
+        const tileDef = hexData.tile;
+        if (tileDef && tileDef.texture)
+        {
+            prog.use();
+            gl.activeTexture(gl.TEXTURE0);
+            gl.bindTexture(gl.TEXTURE_2D, tileDef.texture);
+            prog.setUniformInt("u_Texture", 0);
+        }
+        
         const tileColor = vec3.fromValues(0,0,0);
         prog.setUniformVec4("u_Color", vec4.fromValues(tileColor[0], tileColor[1], tileColor[2], 1));
-
+        
         const tilePos = this.hexGrid.getHexWorldPosition(q, r);
         mat4.fromTranslation(model, tilePos);
         prog.setUniformMat4("u_Model", model);
-
+        
         mat4.transpose(modelinvtr, model);
         mat4.invert(modelinvtr, modelinvtr);
         prog.setUniformMat4("u_ModelInvTr", modelinvtr);
-
+        
         prog.draw(this.hex);   // draw your hex tile mesh
-
-        const tileDef = hexData.tile;
         if (!tileDef) return; // if not collapsed yet
-
+        
         // --- Draw socket cubes ---
         for (let dir = 0; dir < 6; dir++) {
             const socket = tileDef.sockets[dir as keyof typeof tileDef.sockets];
