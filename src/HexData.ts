@@ -1,7 +1,7 @@
 // Main data structure for hexes behavior
 
 import { vec3 } from "gl-matrix";
-import { TileDefinition, ALL_TILES } from './TileDefinition';
+import { TileDefinition, BASE_TILES } from './TileDefinition';
 
 export enum TileType
 {
@@ -98,7 +98,7 @@ class HexData {
 
         // Initially all tiles are possible
         this.possibleTiles = new Set<TileDefinition>();
-        ALL_TILES.forEach(t => this.possibleTiles.add(t));
+        BASE_TILES.forEach(t => this.possibleTiles.add(t));
 
         this.entropy = this.possibleTiles.size;
     }

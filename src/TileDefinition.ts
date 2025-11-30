@@ -101,13 +101,33 @@ const RoomFloor = makeBaseTile("RoomFloor", "room.png", {
     [Direction.NORTHWEST]: SocketType.OPEN
 });
 
-const Solid = makeBaseTile("Solid", "solid.png", {
+export const Solid = makeBaseTile("Solid", "solid.png", {
     [Direction.NORTH]: SocketType.SOLID,
     [Direction.NORTHEAST]: SocketType.SOLID,
     [Direction.SOUTHEAST]: SocketType.SOLID,
     [Direction.SOUTH]: SocketType.SOLID,
     [Direction.SOUTHWEST]: SocketType.SOLID,
     [Direction.NORTHWEST]: SocketType.SOLID
+});
+
+// Special tile types for start and end of the level
+
+export const Start = makeBaseTile("Start", "start.png", {
+    [Direction.NORTH]: SocketType.OPEN,
+    [Direction.NORTHEAST]: SocketType.WALL,
+    [Direction.SOUTHEAST]: SocketType.WALL,
+    [Direction.SOUTH]: SocketType.WALL,
+    [Direction.SOUTHWEST]: SocketType.WALL,
+    [Direction.NORTHWEST]: SocketType.WALL
+});
+
+export const End = makeBaseTile("End", "end.png", {
+    [Direction.NORTH]: SocketType.OPEN,
+    [Direction.NORTHEAST]: SocketType.WALL,
+    [Direction.SOUTHEAST]: SocketType.WALL,
+    [Direction.SOUTH]: SocketType.WALL,
+    [Direction.SOUTHWEST]: SocketType.WALL,
+    [Direction.NORTHWEST]: SocketType.WALL
 });
 
 export function rotateTile(base: TileDefinition, rotation: number): TileDefinition {
@@ -128,13 +148,24 @@ export function rotateTile(base: TileDefinition, rotation: number): TileDefiniti
     return rotated;
 }
 
-const baseTiles = [Corridor, DeadEnd, TJunction, RoomFloor, Solid];
+const unrotatedTiles = [Corridor, DeadEnd, TJunction, RoomFloor, Solid, Start, End];
 
 export const ALL_TILES: TileDefinition[] = [];
+export const BASE_TILES: TileDefinition[] = [];
+export const START_TILES: TileDefinition[] = [];
+export const END_TILES: TileDefinition[] = [];
 
-for (const t of baseTiles) {
+for (const t of unrotatedTiles) {
     for (let r = 0; r < DIRECTION_COUNT; r++) {
-        ALL_TILES.push(rotateTile(t, r));
+        let rotated = rotateTile(t, r);
+        ALL_TILES.push(rotated);
+
+        if (t.name != "Start" && t.name != "End")
+            BASE_TILES.push(rotated);
+        else if (t.name == "Start")
+            START_TILES.push(rotated);
+        else if (t.name == "End")
+            END_TILES.push(rotated);
     }
 }
 
@@ -160,7 +191,7 @@ export async function loadTileTextures(
             img.onerror = reject;
             img.src = basePath + file;
         });
-
+        
     const promises = ALL_TILES.map(async tile => {
         const tex = await loadTexture(tile.textureName);
         tile.texture = tex;

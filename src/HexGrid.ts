@@ -1,5 +1,5 @@
 import HexData from './HexData'
-import { TileDefinition, ALL_TILES, socketsMatch, Direction } from './TileDefinition';
+import { TileDefinition, ALL_TILES, socketsMatch, Direction, Start, End } from './TileDefinition';
 import { vec2, vec3 } from 'gl-matrix';
 
 class HexGrid {

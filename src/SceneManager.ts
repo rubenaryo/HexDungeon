@@ -2,7 +2,7 @@ import { vec2, vec3, vec4, mat4 } from 'gl-matrix';
 import Hex from './geometry/Hex';
 import Cube from './geometry/Cube';
 import HexGrid from './HexGrid';
-import { SocketType } from './TileDefinition';
+import { SocketType, Solid, Start, End, START_TILES, END_TILES} from './TileDefinition';
 import * as hd from './HexData'
 import ShaderProgram from './rendering/gl/ShaderProgram';
 import Camera from './Camera';
@@ -22,9 +22,15 @@ export class SceneManager {
         this.cube = new Cube(vec3.fromValues(0,0,0), 1);
         this.cube.create();
 
-        //const SPACING:number = 5;
-        //this.hexGrid.forceCollapseSingleTile(-SPACING, 0, hd.TileType.WATER);
-        //this.hexGrid.forceCollapseSingleTile(SPACING, 0, hd.TileType.WATER);
+        const randomStartIdx = Math.floor(Math.random() * START_TILES.length);
+        const randomEndIdx = Math.floor(Math.random() * END_TILES.length)
+
+        const randomStart = START_TILES[randomStartIdx];
+        const randomEnd = END_TILES[randomEndIdx];
+
+        const SPACING:number = 3;
+        this.hexGrid.forceCollapseSingleTile(-SPACING, 0, randomStart);
+        this.hexGrid.forceCollapseSingleTile(SPACING, 0, randomEnd);
         //this.hexGrid.forceCollapseSingleTile(SPACING/2.5, -SPACING/2.5, hd.TileType.WATER);
     }
 
@@ -70,14 +76,19 @@ export class SceneManager {
 
         if (!hexData) return;
         
+        prog.use();
+        gl.activeTexture(gl.TEXTURE0);
         const tileDef = hexData.tile;
         if (tileDef && tileDef.texture)
         {
-            prog.use();
-            gl.activeTexture(gl.TEXTURE0);
             gl.bindTexture(gl.TEXTURE_2D, tileDef.texture);
-            prog.setUniformInt("u_Texture", 0);
         }
+        else
+        {
+            gl.bindTexture(gl.TEXTURE_2D, Solid.texture);
+        }
+
+        prog.setUniformInt("u_Texture", 0);
         
         const tileColor = vec3.fromValues(0,0,0);
         prog.setUniformVec4("u_Color", vec4.fromValues(tileColor[0], tileColor[1], tileColor[2], 1));
