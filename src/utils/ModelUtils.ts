@@ -1,92 +1,124 @@
-import { vec3, vec2 } from 'gl-matrix';
+import { vec3, vec2 } from "gl-matrix";
 
 export function parseOBJ(objText: string): {
     positions: Float32Array;
     normals: Float32Array;
     uvs: Float32Array;
     indices: Uint32Array;
-}
-{
-    const positions: number[] = [];
-    const normals: number[] = [];
-    const uvs: number[] = [];
-    const indices: number[] = [];
-
+} {
     const tempPositions: vec3[] = [];
     const tempNormals: vec3[] = [];
     const tempUVs: vec2[] = [];
 
-    const lines = objText.split('\n');
+    const finalPositions: number[] = [];
+    const finalNormals: number[] = [];
+    const finalUVs: number[] = [];
+    const finalIndices: number[] = [];
 
-    for (const line of lines)
-    {
+    // Cache: maps "p/t/n" to final vertex index
+    const vertexCache = new Map<string, number>();
+
+    const lines = objText.split("\n");
+
+    function getOrCreateVertex(p: number, t: number, n: number): number {
+        const key = `${p}/${t}/${n}`;
+
+        // Already built?
+        if (vertexCache.has(key)) {
+            return vertexCache.get(key)!;
+        }
+
+        // --- Create new combined vertex ---
+
+        const pos = tempPositions[p];
+        finalPositions.push(pos[0], pos[1], pos[2], 1.0);
+
+        const uv = (t >= 0 ? tempUVs[t] : vec2.fromValues(0, 0));
+        finalUVs.push(uv[0], uv[1]);
+
+        const normal = (n >= 0 ? tempNormals[n] : vec3.fromValues(0, 1, 0));
+        finalNormals.push(normal[0], normal[1], normal[2], 0.0);
+
+        // Use vertexCache.size as the new vertex index
+        const newIndex = vertexCache.size;
+        vertexCache.set(key, newIndex);
+
+        return newIndex;
+    }
+
+    for (const line of lines) {
         const parts = line.trim().split(/\s+/);
+        if (parts.length === 0) continue;
 
-        if (parts[0] === 'v')
-        {
-            tempPositions.push(vec3.fromValues(
-                parseFloat(parts[1]),
-                parseFloat(parts[2]),
-                parseFloat(parts[3])
-            ));
-        }
-        else if (parts[0] === 'vn')
-        {
-            tempNormals.push(vec3.fromValues(
-                parseFloat(parts[1]),
-                parseFloat(parts[2]),
-                parseFloat(parts[3])
-            ));
-        }
-        else if (parts[0] === 'vt')
-        {
-            tempUVs.push(vec2.fromValues(
-                parseFloat(parts[1]),
-                parseFloat(parts[2])
-            ));
-        }
-        else if (parts[0] === 'f')
-        {
-            const faceVertices = parts.slice(1);
+        switch (parts[0]) {
+            case "v": {
+                tempPositions.push(vec3.fromValues(
+                    parseFloat(parts[1]),
+                    parseFloat(parts[2]),
+                    parseFloat(parts[3])
+                ));
+                break;
+            }
 
-            const pushVertex = (v: string) =>
-            {
-                const vertexData = v.split('/');
-                const posIndex = parseInt(vertexData[0]) - 1;
-                const uvIndex = vertexData[1] ? parseInt(vertexData[1]) - 1 : posIndex;
-                const normalIndex = vertexData[2] ? parseInt(vertexData[2]) - 1 : posIndex;
+            case "vt": {
+                tempUVs.push(vec2.fromValues(
+                    parseFloat(parts[1]),
+                    parseFloat(parts[2])
+                ));
+                break;
+            }
 
-                const pos = tempPositions[posIndex];
-                positions.push(pos[0], pos[1], pos[2], 1);
+            case "vn": {
+                tempNormals.push(vec3.fromValues(
+                    parseFloat(parts[1]),
+                    parseFloat(parts[2]),
+                    parseFloat(parts[3])
+                ));
+                break;
+            }
 
-                const normal = tempNormals[normalIndex] || vec3.fromValues(0, 1, 0);
-                normals.push(normal[0], normal[1], normal[2], 0);
+            case "f": {
+                const face = parts.slice(1);
 
-                const uv = tempUVs[uvIndex] || vec2.fromValues(0, 0);
-                uvs.push(uv[0], uv[1]);
+                // Triangulate n-gon into triangles
+                for (let i = 1; i < face.length - 1; i++) {
+                    const verts = [
+                        face[0],
+                        face[i],
+                        face[i + 1]
+                    ];
 
-                indices.push(positions.length / 4 - 1);
-            };
+                    for (const fv of verts) {
+                        const indices = fv.split("/");
+                        
+                        // Parse vertex index (always present)
+                        const p = parseInt(indices[0]) - 1;
+                        
+                        // Parse UV index (may be empty)
+                        let t = -1;
+                        if (indices.length > 1 && indices[1] !== "") {
+                            t = parseInt(indices[1]) - 1;
+                        }
+                        
+                        // Parse normal index (may be empty)
+                        let n = -1;
+                        if (indices.length > 2 && indices[2] !== "") {
+                            n = parseInt(indices[2]) - 1;
+                        }
 
-            // First triangle
-            pushVertex(faceVertices[0]);
-            pushVertex(faceVertices[1]);
-            pushVertex(faceVertices[2]);
-
-            // Quad → second triangle
-            if (faceVertices.length === 4)
-            {
-                pushVertex(faceVertices[0]);
-                pushVertex(faceVertices[2]);
-                pushVertex(faceVertices[3]);
+                        const index = getOrCreateVertex(p, t, n);
+                        finalIndices.push(index);
+                    }
+                }
+                break;
             }
         }
     }
-
+    
     return {
-        positions: new Float32Array(positions),
-        normals: new Float32Array(normals),
-        uvs: new Float32Array(uvs),
-        indices: new Uint32Array(indices)
+        positions: new Float32Array(finalPositions),
+        normals: new Float32Array(finalNormals),
+        uvs: new Float32Array(finalUVs),
+        indices: new Uint32Array(finalIndices)
     };
 }
