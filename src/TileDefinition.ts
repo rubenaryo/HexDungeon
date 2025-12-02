@@ -1,4 +1,4 @@
-import { vec3 } from "gl-matrix";
+import { vec2, vec3 } from "gl-matrix";
 
 export enum Direction {
     NORTH = 0,
@@ -10,6 +10,29 @@ export enum Direction {
 }
 
 export const DIRECTION_COUNT = 6;
+
+export const AXIAL_OFFSETS: vec2[] = [
+    vec2.fromValues(0, -1),  // NORTH
+    vec2.fromValues(1, -1),  // NORTHEAST
+    vec2.fromValues(1, 0),   // SOUTHEAST
+    vec2.fromValues(0, 1),   // SOUTH
+    vec2.fromValues(-1, 1),  // SOUTHWEST
+    vec2.fromValues(-1, 0)   // NORTHWEST
+];
+
+export function axialToDirection(offset: vec2|null): Direction | null {
+    if (offset == null)
+        return null;
+    
+    for (let i = 0; i < AXIAL_OFFSETS.length; i++) {
+        const o = AXIAL_OFFSETS[i];
+
+        if (o[0] === offset[0] && o[1] === offset[1]) {
+            return i as Direction;
+        }
+    }
+    return null; // not a valid direction
+}
 
 const directionVectors: vec3[] = [
     vec3.fromValues(0, 0, -1),
@@ -115,18 +138,18 @@ export const Solid = makeBaseTile("Solid", "solid.png", {
 export const Start = makeBaseTile("Start", "start.png", {
     [Direction.NORTH]: SocketType.OPEN,
     [Direction.NORTHEAST]: SocketType.WALL,
-    [Direction.SOUTHEAST]: SocketType.WALL,
+    [Direction.SOUTHEAST]: SocketType.OPEN,
     [Direction.SOUTH]: SocketType.WALL,
-    [Direction.SOUTHWEST]: SocketType.WALL,
+    [Direction.SOUTHWEST]: SocketType.OPEN,
     [Direction.NORTHWEST]: SocketType.WALL
 });
 
 export const End = makeBaseTile("End", "end.png", {
     [Direction.NORTH]: SocketType.OPEN,
     [Direction.NORTHEAST]: SocketType.WALL,
-    [Direction.SOUTHEAST]: SocketType.WALL,
+    [Direction.SOUTHEAST]: SocketType.OPEN,
     [Direction.SOUTH]: SocketType.WALL,
-    [Direction.SOUTHWEST]: SocketType.WALL,
+    [Direction.SOUTHWEST]: SocketType.OPEN,
     [Direction.NORTHWEST]: SocketType.WALL
 });
 
@@ -167,6 +190,18 @@ for (const t of unrotatedTiles) {
         else if (t.name == "End")
             END_TILES.push(rotated);
     }
+}
+
+export function getBaseTileForEntryExit(entry:Direction, exit:Direction): TileDefinition|null
+{
+    let filtered = BASE_TILES.filter((tile) => 
+        tile.sockets[entry] == SocketType.OPEN && tile.sockets[exit] == SocketType.OPEN);
+
+    if (filtered.length == 0)
+        return null;
+
+    let randIdx = Math.floor(Math.random() * filtered.length);
+    return filtered[randIdx];
 }
 
 export async function loadTileTextures(

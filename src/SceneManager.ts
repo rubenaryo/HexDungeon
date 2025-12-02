@@ -2,12 +2,13 @@ import { vec2, vec3, vec4, mat4 } from 'gl-matrix';
 import Hex from './geometry/Hex';
 import Cube from './geometry/Cube';
 import HexGrid from './HexGrid';
-import { SocketType, Solid, Start, End, START_TILES, END_TILES } from './TileDefinition';
+import { TileDefinition, Direction, axialToDirection, SocketType, Solid, Start, End, BASE_TILES, START_TILES, END_TILES } from './TileDefinition';
 import * as hd from './HexData'
 import ShaderProgram from './rendering/gl/ShaderProgram';
 import Camera from './Camera';
 import { gl } from './globals';
 
+const GRID_RADIUS = 5;
 export class SceneManager {
     hex: Hex;
     cube: Cube;
@@ -17,7 +18,7 @@ export class SceneManager {
         this.hex = new Hex();
         this.hex.create();
         this.hexGrid = new HexGrid();
-        this.hexGrid.initializeHexGrid(5);
+        this.hexGrid.initializeHexGrid(GRID_RADIUS);
 
         this.cube = new Cube(vec3.fromValues(0, 0, 0), 1);
         this.cube.create();
@@ -29,11 +30,13 @@ export class SceneManager {
         const randomEnd = END_TILES[randomEndIdx];
 
         const SPACING: number = 3;
-        this.hexGrid.forceCollapseSingleTile(-SPACING, 0, randomStart);
-        this.hexGrid.forceCollapseSingleTile(SPACING, 0, randomEnd);
+        const startPos = vec2.fromValues(-SPACING, 0);
+        const endPos = vec2.fromValues(SPACING, 0);
+        this.hexGrid.forceCollapseSingleTile(startPos[0], startPos[1], randomStart);
+        this.hexGrid.forceCollapseSingleTile(endPos[0], endPos[1], randomEnd);
         //this.hexGrid.forceCollapseSingleTile(SPACING/2.5, -SPACING/2.5, hd.TileType.WATER);
 
-
+        this.collapseGoalPath(startPos, endPos);
     }
 
     collapseSingleTile(): void {
@@ -69,6 +72,10 @@ export class SceneManager {
             return arr;
         }
 
+        function withinRadius(n:number, radius:number): boolean {
+            return Math.abs(n) <= radius;
+        }
+
         const visited = new Set<string>();
         const path: vec2[] = [];
 
@@ -86,6 +93,11 @@ export class SceneManager {
             const dirs = shuffle([...HEX_DIRS]);
             for (let d of dirs) {
                 const next = vec2.fromValues(current[0] + d[0], current[1] + d[1]);
+                if (!withinRadius(next[0], GRID_RADIUS))
+                    continue;
+                if (!withinRadius(next[1], GRID_RADIUS))
+                    continue;
+
                 if (dfs(next)) return true;
             }
 
@@ -97,6 +109,59 @@ export class SceneManager {
         dfs(vec2.clone(startIdx));
 
         console.log(path.length);
+        
+        function subtract(a:vec2, b:vec2) : vec2
+        {
+            return vec2.fromValues(a[0] - b[0], a[1] - b[1]);
+        }
+
+        function validateDef(def:TileDefinition, requiredDir:Direction[])
+        {
+            for(let reqDir of requiredDir)
+            {
+                if (def.sockets[reqDir] != SocketType.OPEN)
+                    return false;
+            }
+
+            return true;
+        }
+
+        let prevIdx = null;
+        let nextIdx = null;
+        for (let i = 0; i != path.length; ++i)
+        {
+            let idx = path[i];
+            prevIdx = i-1 > 0 ? path[i - 1] : null;
+            nextIdx = i+1 < path.length ? path[i+1] : null;
+
+            let requiredDir: Direction[] = []
+
+            if (prevIdx != null)
+            {
+                let entryOffset = subtract(prevIdx, idx);
+                let entryDir = axialToDirection(entryOffset);
+                requiredDir.push(entryDir);
+            }
+
+            if (nextIdx != null)
+            {
+                let exitOffset = subtract(nextIdx, idx);
+                let exitDir = axialToDirection(exitOffset);
+                requiredDir.push(exitDir);
+            }
+
+            let viableDefs = BASE_TILES.filter((def) => validateDef(def, requiredDir));
+
+            if (viableDefs.length == 0)
+            {
+                console.log("Error: no viable tiles found for " + axialKey(idx));
+                return;
+            }
+            const randomDefIdx = Math.floor(Math.random() * viableDefs.length);
+            let chosenDef = viableDefs[randomDefIdx];
+
+            this.hexGrid.forceCollapseSingleTile(idx[0], idx[1], chosenDef);
+        }
     }
 
     drawTiles(prog: ShaderProgram, debugProg: ShaderProgram, camera: Camera): void {
