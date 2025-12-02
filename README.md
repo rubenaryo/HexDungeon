@@ -8,6 +8,44 @@ The goal is to build a foundational map builder to serve as the basis for a futu
 
 [Live Demo](https://rubenaryo.github.io/HexDungeon/)
 
+## Final
+
+### Sockets
+For the final, I refined the tile definitions and created an explicit socket system for more fine-grained adjacency. The socket system is versatile and can handle automatic generation of new tile variants when rotated, allowing for more open socket permutations.
+
+### Start/End Goals
+Moreover, I also implemented a definite start/end goal system, along with the path-finding algorithm that ensures a solution is possible. To implement this, I used a modified Depth-First-Search which picks adjacent tiles at random. This is done purposely because we intentionally do not want the 'shortest path' but actually something more interesting, but still need to guarantee connectivity. 
+
+### Tile Types
+I currently define the following tile types:
+- Corridor
+- Dead End
+- T-Junction
+- RoomFloor
+- Solid
+- Start
+- End
+
+Each has 6 variants for each possible orientation, and a custom tile texture authored by me that is automatically rotated appropriately in-shader.
+
+### Examples
+| ![](img/whole_grid_no_sockets.png)| ![](img/whole_grid_with_sockets.png)|
+|--------|--------|
+| Sample generation of a maze with no start/end  | With open/closed sockets visualized |
+
+| ![](img/start_end_spawn.png)| ![](img/start_end_pathfinding.png)|
+|--------|--------|
+| Initial state with all hexes uncollapsed  | After running pathfinding and building a path from start to end |
+
+### Pitfalls
+As an algorithm, WFC is not guaranteed to generate a valid map on the first attempt when working with finite tile sets. Since each cell is collapsed one-by-one, it is possible to end up with a situation where a cell does not have an available tile to fulfill the adjacency requirements of its neighbors. 
+
+While a fixup pass is possible, in our case we treat uncollapsible tiles as "closed" and are inaccessible for pathfinding.
+
+| ![](img/wfc_error.png)|
+|--------|
+| Some tiles have no available TileDefinitions left.  |
+
 ## Milestone 2
 For milestone 2, I was able to craft the core wave-function collapse algorithm, as well as improve the camera movement and create some UI buttons. The core algorithm still needs tweaking since each tile type has an equal chance of collapsing into, leading to some strange terrain generation or a bias towards certain tiles. 
 
@@ -39,7 +77,8 @@ For milestone 1, I focused on getting a polished hex grid implemented in WebGL w
 - The dungeon layout builder is the core of the project. After being given a target dimension by the application, it intelligently places pre-authored tiles according to a (hard-coded) rule-set.
 - The application holds the WebGL guts that bind the project together, including the initialization flow which generates the dungeon, and the frame-by-frame flow which orients the game camera and moves the character.
 
-#### Timeline:
+#### Planned Timeline:
+May differ from actual results
 
 **Milestone 1:**
 - Core WebGL app is up and running, runnable in a browser.
@@ -52,11 +91,6 @@ For milestone 1, I focused on getting a polished hex grid implemented in WebGL w
 - Some tiles are properly authored
 - Beginnings of player movement and rotating camera.
 - Bugfixing and polish
-
-**Milestone 3:**
-- All tiles are authored
-- Player movement and camera rotation is done
-- More polish
 
 **Final**
 - Polish and bugfixing
