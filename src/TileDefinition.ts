@@ -177,14 +177,19 @@ export const ALL_TILES: TileDefinition[] = [];
 export const BASE_TILES: TileDefinition[] = [];
 export const START_TILES: TileDefinition[] = [];
 export const END_TILES: TileDefinition[] = [];
+export const SOLID_TILES: TileDefinition[] = [];
 
 for (const t of unrotatedTiles) {
+
     for (let r = 0; r < DIRECTION_COUNT; r++) {
         let rotated = rotateTile(t, r);
         ALL_TILES.push(rotated);
 
-        if (t.name != "Start" && t.name != "End")
+        if (t.name != "Start" && t.name != "End") {
             BASE_TILES.push(rotated);
+            if (t.name == "Solid")
+                SOLID_TILES.push(rotated);
+        }
         else if (t.name == "Start")
             START_TILES.push(rotated);
         else if (t.name == "End")

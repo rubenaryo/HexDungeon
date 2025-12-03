@@ -1,5 +1,5 @@
 import HexData from './HexData'
-import { TileDefinition, ALL_TILES, socketsMatch, Direction, Start, End } from './TileDefinition';
+import { TileDefinition, SOLID_TILES, ALL_TILES, socketsMatch, Direction, Start, End } from './TileDefinition';
 import { vec2, vec3 } from 'gl-matrix';
 
 class HexGrid {
@@ -63,25 +63,31 @@ class HexGrid {
         return true;
     }
 
-    /** Choose a tile with lowest entropy and collapse it */
-    collapseSingleTile(): boolean {
-        const allHexes = this.getAllHexData();
-        const unobserved = allHexes.filter(h => !h.observed);
+        /** Choose a tile with lowest entropy and collapse it */
+        collapseSingleTile(): boolean {
+            const allHexes = this.getAllHexData();
+            const unobserved = allHexes.filter(h => !h.observed && h.possibleTiles.size > 0);
 
-        if (unobserved.length === 0) return true;
+            if (unobserved.length === 0) return true;
 
-        const minEntropy = Math.min(...unobserved.map(h => h.entropy));
-        const candidates = unobserved.filter(h => h.entropy === minEntropy);
-        const chosen = candidates[Math.floor(Math.random() * candidates.length)];
+            const minEntropy = Math.min(...unobserved.map(h => h.entropy));
+            const candidates = unobserved.filter(h => h.entropy === minEntropy);
+            const chosen = candidates[Math.floor(Math.random() * candidates.length)];
 
-        const possible = Array.from(chosen.possibleTiles);
-        const chosenTile = possible[Math.floor(Math.random() * possible.length)];
+            // If it's uncollapsible, don't try
+            if (chosen.possibleTiles.size === 0)
+            {
+                return false;
+            }
 
-        chosen.collapseTo(chosenTile);
-        this.propagateConstraints(chosen);
+            const possible = Array.from(chosen.possibleTiles);
+            let chosenTile = possible[Math.floor(Math.random() * possible.length)];
 
-        return false;
-    }
+            chosen.collapseTo(chosenTile);
+            this.propagateConstraints(chosen);
+
+            return false;
+        }
 
     propagateConstraints(observed: HexData) {
         if (!observed.tile) return; // sanity check
@@ -122,8 +128,8 @@ class HexGrid {
 
     /** World coordinate for rendering */
     getHexWorldPosition(q: number, r: number): vec3 {
-        const x = (3.0 / 2 * q);
-        const y = (Math.sqrt(3) / 2 * q + Math.sqrt(3) * r);
+        const x = (3.0 / 2.0 * q);
+        const y = (Math.sqrt(3) / 2.0 * q + Math.sqrt(3.0) * r);
         return vec3.fromValues(x * 1.1, 0, y * 1.1);
     }
 

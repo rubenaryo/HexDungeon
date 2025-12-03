@@ -2,7 +2,7 @@ import { vec2, vec3, vec4, mat4 } from 'gl-matrix';
 import Hex from './geometry/Hex';
 import Cube from './geometry/Cube';
 import HexGrid from './HexGrid';
-import { TileDefinition, Direction, axialToDirection, SocketType, Solid, Start, End, BASE_TILES, START_TILES, END_TILES } from './TileDefinition';
+import { TileDefinition, Direction, axialToDirection, SocketType, Solid, Start, End, SOLID_TILES, BASE_TILES, START_TILES, END_TILES } from './TileDefinition';
 import * as hd from './HexData'
 import ShaderProgram from './rendering/gl/ShaderProgram';
 import Camera from './Camera';
@@ -47,6 +47,16 @@ export class SceneManager {
         var done = false;
         while (!done) {
             done = this.hexGrid.collapseSingleTile();
+        }
+
+        let datas = this.hexGrid.getAllHexData().filter(h => !h.observed);
+
+        for (let data of datas)
+        {
+            if (!data.observed)
+            {
+                this.hexGrid.forceCollapseSingleTile(data.q, data.r, SOLID_TILES[0])
+            }
         }
     }
 
@@ -150,17 +160,19 @@ export class SceneManager {
                 requiredDir.push(exitDir);
             }
 
-            let viableDefs = BASE_TILES.filter((def) => validateDef(def, requiredDir));
-
-            if (viableDefs.length == 0)
+            let hexData = this.hexGrid.getHexData(idx[0], idx[1]);
+            if (hexData == null)
             {
-                console.log("Error: no viable tiles found for " + axialKey(idx));
-                return;
+                continue;
             }
-            const randomDefIdx = Math.floor(Math.random() * viableDefs.length);
-            let chosenDef = viableDefs[randomDefIdx];
 
-            this.hexGrid.forceCollapseSingleTile(idx[0], idx[1], chosenDef);
+            for (const tile of hexData.possibleTiles) 
+            {
+                if (!validateDef(tile, requiredDir))
+                {
+                    hexData.possibleTiles.delete(tile);
+                }
+            }
         }
     }
 
@@ -199,7 +211,7 @@ export class SceneManager {
                 gl.bindTexture(gl.TEXTURE_2D, tileDef.texture);
             }
             else {
-                gl.bindTexture(gl.TEXTURE_2D, Solid.texture);
+                gl.bindTexture(gl.TEXTURE_2D, SOLID_TILES[0].texture);
             }
 
             prog.setUniformInt("u_Texture", 0);
@@ -219,6 +231,7 @@ export class SceneManager {
             prog.draw(this.hex);   // draw your hex tile mesh
             if (!tileDef) return; // if not collapsed yet
 
+            return;
             // --- Draw socket cubes ---
             for (let dir = 0; dir < 6; dir++) {
                 const socket = tileDef.sockets[dir as keyof typeof tileDef.sockets];
